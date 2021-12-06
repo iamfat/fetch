@@ -1,0 +1,24 @@
+{
+  "name": "@genee/fetch",
+  "version": "1.0.2",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "browser": {
+    "dist/index.js": "dist/index.browser.js",
+    "dist/index.mjs": "dist/index.browser.mjs"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build:types:browser": "tsc src/index.browser.ts --lib esnext,dom --declaration true --emitDeclarationOnly --outDir dist",
+    "build:types:node": "tsc src/index.ts --lib esnext --declaration true --emitDeclarationOnly --outDir dist",
+    "build": "node esbuild.config.js && yarn build:types:node && yarn build:types:browser"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.11",
+    "esbuild": "^0.14.1",
+    "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "node-fetch": "^3.1.0"
+  }
+}
