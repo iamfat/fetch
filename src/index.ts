@@ -8,7 +8,11 @@ class ResponseError extends Error {
     }
 }
 
-type RequestInitEx = RequestInit & { timeout?: number; json?: boolean };
+export type RequestInitEx = Omit<RequestInit, 'body'> & {
+    body: BodyInit | string | object;
+    timeout?: number;
+    json?: boolean;
+};
 
 let overrideHTTPMethod = false;
 
@@ -28,6 +32,11 @@ function fetchEx<T = any>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> 
             init.method = 'POST';
         }
     }
+
+    if (json) {
+        init.headers['Content-Type'] = 'application/json';
+    }
+
     if (init.body !== undefined && typeof init.body !== 'string') {
         init.body = JSON.stringify(init.body);
     }
@@ -38,7 +47,7 @@ function fetchEx<T = any>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> 
                 reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
             }, timeout);
         }
-        nodeFetch(url, init)
+        nodeFetch(url, init as RequestInit)
             .then((r) => {
                 if (!r.ok) reject(new ResponseError(r));
                 return json ? r.json() : r.text();

@@ -6,7 +6,11 @@ export class ResponseError extends Error {
     }
 }
 
-export type RequestInitEx = RequestInit & { timeout?: number; json?: boolean };
+export type RequestInitEx = Omit<RequestInit, 'body'> & {
+    body: BodyInit | string | object;
+    timeout?: number;
+    json?: boolean;
+};
 
 let overrideHTTPMethod = false;
 
@@ -23,7 +27,12 @@ function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
             init.method = 'POST';
         }
     }
-    if (init.body !== undefined  && typeof init.body !== 'string') {
+
+    if (json) {
+        init.headers['Content-Type'] = 'application/json';
+    }
+
+    if (init.body !== undefined && typeof init.body !== 'string') {
         init.body = JSON.stringify(init.body);
     }
     return new Promise((resolve, reject) => {
@@ -34,7 +43,7 @@ function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
                 reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
             }, timeout);
         }
-        fetch(url, init)
+        fetch(url, init as RequestInit)
             .then((r) => {
                 if (!r.ok) reject(new ResponseError(r));
                 return json ? r.json() : r.text();
