@@ -51,8 +51,7 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
         }
 
         return new Promise((resolve, reject) => {
-            let timeoutHandler: number;
-            const { setTimeout, clearTimeout } = window;
+            let timeoutHandler: any;
             if (timeout > 0) {
                 timeoutHandler = setTimeout(() => {
                     reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));

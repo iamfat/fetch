@@ -1,5 +1,4 @@
 export * from './fetch';
-export { Response } from 'node-fetch';
 
 import extendFetch from './fetch';
 import type { RequestInfo, RequestInit } from 'node-fetch';
