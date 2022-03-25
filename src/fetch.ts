@@ -1,8 +1,18 @@
 class ResponseError extends Error {
+    private response: Response;
     code: number;
     constructor(r: Response) {
         super(r.statusText);
         this.code = r.status;
+        this.response = r;
+    }
+
+    json() {
+        return this.response.json();
+    }
+
+    text() {
+        return this.response.text();
     }
 }
 
