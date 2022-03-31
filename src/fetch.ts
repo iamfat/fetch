@@ -69,7 +69,10 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
             }
             fetch(url, init)
                 .then((r) => {
-                    if (!r.ok) reject(new ResponseError(r));
+                    if (!r.ok) {
+                        reject(new ResponseError(r));
+                        return;
+                    }
                     return json ? r.json() : r.text();
                 })
                 .then((r) => {
