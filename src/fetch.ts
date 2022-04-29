@@ -43,7 +43,7 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
     }
 
     return function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
-        const { timeout, json, ...init } = { timeout: 5000, json: true, ...(initEx || {}) };
+        const { timeout = 5000, json = true, ...init } = { headers: {}, ...initEx };
         if (init.method) {
             const method = init.method.toUpperCase();
             if (['PUT', 'PATCH', 'DELETE'].includes(method) && overrideHTTPMethod) {
