@@ -14,12 +14,22 @@ class ResponseError extends Error {
     text() {
         return this.response.text();
     }
+
+    blob() {
+        return this.response.blob();
+    }
+
+    buffer() {
+        return this.response.arrayBuffer();
+    }
 }
 
 type RequestInitEx = Omit<RequestInit, 'body'> & {
     body?: any;
     timeout?: number;
     json?: boolean;
+    blob?: boolean;
+    buffer?: boolean;
 };
 
 let overrideHTTPMethod = false;
@@ -43,7 +53,7 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
     }
 
     return function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
-        const { timeout = 5000, json = true, ...init } = { headers: {}, ...initEx };
+        const { timeout = 5000, json = true, blob, buffer, ...init } = { headers: {}, ...initEx };
         if (init.method) {
             const method = init.method.toUpperCase();
             if (['PUT', 'PATCH', 'DELETE'].includes(method) && overrideHTTPMethod) {
@@ -73,7 +83,7 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
                         reject(new ResponseError(r));
                         return;
                     }
-                    return json ? r.json() : r.text();
+                    return json ? r.json() : blob ? r.blob() : buffer ? r.arrayBuffer() : r.text();
                 })
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
