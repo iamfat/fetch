@@ -1,18 +1,13 @@
 export * from './fetch';
 
-import extendFetch from './fetch';
-import type { RequestInfo, RequestInit } from 'node-fetch';
+import extendFetch, { RequestInit } from './fetch';
+import type { RequestInfo, RequestInit as NodeRequestInit } from 'node-fetch';
 
-type RequestInitEx = Omit<RequestInit, 'body'> & {
-    body?: any;
-    timeout?: number;
-    json?: boolean;
-};
-export type { RequestInitEx as RequestInit };
+export type { RequestInit };
 
-const fetch = extendFetch((url: RequestInfo, init: RequestInit) =>
+const fetch = extendFetch((url: RequestInfo, init: NodeRequestInit) =>
     import('node-fetch').then((it) => it.default(url, init)),
-) as <T>(url: RequestInfo, initEx?: RequestInitEx) => Promise<T>;
+) as <T>(url: RequestInfo, initEx?: RequestInit) => Promise<T>;
 
 export { fetch };
 export default fetch;

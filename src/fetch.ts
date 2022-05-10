@@ -38,7 +38,7 @@ function enableHTTPMethodOveride(enable: boolean) {
     overrideHTTPMethod = enable;
 }
 
-export { enableHTTPMethodOveride, ResponseError };
+export { enableHTTPMethodOveride, ResponseError, RequestInitEx as RequestInit };
 
 export default (fetch: (url: any, init?: any) => Promise<any>) => {
     function isPlainObject(obj: any) {
@@ -62,11 +62,8 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
             }
         }
 
-        if (json) {
-            init.headers['Content-Type'] = 'application/json';
-        }
-
         if (isPlainObject(init.body)) {
+            init.headers['Content-Type'] = 'application/json';
             init.body = JSON.stringify(init.body);
         }
 
@@ -83,7 +80,7 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
                         reject(new ResponseError(r));
                         return;
                     }
-                    return json ? r.json() : blob ? r.blob() : buffer ? r.arrayBuffer() : r.text();
+                    return blob ? r.blob() : buffer ? r.arrayBuffer() : json ? r.json() : r.text();
                 })
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
