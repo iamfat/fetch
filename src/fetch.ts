@@ -71,21 +71,20 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
             let timeoutHandler: any;
             if (timeout > 0) {
                 timeoutHandler = setTimeout(() => {
+                    timeoutHandler = undefined;
                     reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
                 }, timeout);
             }
             fetch(url, init)
                 .then((r) => {
+                    if (timeoutHandler) clearTimeout(timeoutHandler);
                     if (!r.ok) {
                         reject(new ResponseError(r));
                         return;
                     }
                     return blob ? r.blob() : buffer ? r.arrayBuffer() : json ? r.json() : r.text();
                 })
-                .then((r) => {
-                    if (timeoutHandler) clearTimeout(timeoutHandler);
-                    resolve(r as T);
-                })
+                .then((r) => resolve(r as T))
                 .catch(reject);
         });
     };
