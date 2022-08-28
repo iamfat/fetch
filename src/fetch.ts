@@ -40,7 +40,7 @@ function enableHTTPMethodOveride(enable: boolean) {
 
 export { enableHTTPMethodOveride, ResponseError, RequestInitEx as RequestInit };
 
-export default (fetch: (url: any, init?: any) => Promise<any>) => {
+export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => void }) => {
     function isPlainObject(obj: any) {
         if (typeof obj !== 'object' || obj === null) return false;
 
@@ -69,13 +69,17 @@ export default (fetch: (url: any, init?: any) => Promise<any>) => {
 
         return new Promise((resolve, reject) => {
             let timeoutHandler: any;
+
+            const promise = fetch(url, init);
+
             if (timeout > 0) {
                 timeoutHandler = setTimeout(() => {
                     timeoutHandler = undefined;
+                    promise.abort();
                     reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
                 }, timeout);
             }
-            fetch(url, init)
+            promise
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
                     if (!r.ok) {
