@@ -63,14 +63,12 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
         }
 
         if (isPlainObject(init.body)) {
-            init.headers['Content-Type'] = 'application/json';
+            init.headers['Content-Type'] = 'application/json;charset=UTF-8';
             init.body = JSON.stringify(init.body);
         }
 
         return new Promise((resolve, reject) => {
             let timeoutHandler: any;
-
-            const promise = fetch(url, init);
 
             if (timeout > 0) {
                 timeoutHandler = setTimeout(() => {
@@ -79,12 +77,25 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
                     reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
                 }, timeout);
             }
+
+            const promise: Promise<Response> & { abort: () => void } = fetch(url, init);
             promise
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
                     if (!r.ok) {
                         reject(new ResponseError(r));
                         return;
+                    }
+                    const [type] = (r.headers.get('Content-Type') || '').split(';');
+                    const [majorType, minorType] = type.split('/');
+                    if (majorType === 'text') {
+                        return r.text();
+                    } else if (majorType === 'application') {
+                        if (minorType === 'json') {
+                            return r.json();
+                        } else if (minorType === 'octet-stream') {
+                            return blob ? r.blob() : r.arrayBuffer();
+                        }
                     }
                     return blob ? r.blob() : buffer ? r.arrayBuffer() : json ? r.json() : r.text();
                 })
