@@ -1,26 +1,13 @@
 class ResponseError extends Error {
-    private response: Response;
+    response: Response;
+    body: any;
     code: number;
-    constructor(r: Response) {
+
+    constructor(r: Response, body?: any) {
         super(r.statusText);
         this.code = r.status;
         this.response = r;
-    }
-
-    json() {
-        return this.response.json();
-    }
-
-    text() {
-        return this.response.text();
-    }
-
-    blob() {
-        return this.response.blob();
-    }
-
-    buffer() {
-        return this.response.arrayBuffer();
+        this.body = body;
     }
 }
 
@@ -82,24 +69,30 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
             promise
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
-                    if (!r.ok) {
-                        reject(new ResponseError(r));
-                        return;
-                    }
                     const [type] = (r.headers.get('Content-Type') || '').split(';');
                     const [majorType, minorType] = type.split('/');
+                    let method: string | undefined;
                     if (majorType === 'text') {
-                        return r.text();
+                        method = 'text';
                     } else if (majorType === 'application') {
                         if (minorType === 'json') {
-                            return r.json();
+                            method = 'json';
                         } else if (minorType === 'octet-stream') {
-                            return blob ? r.blob() : r.arrayBuffer();
+                            method = blob ? 'blob' : 'arrayBuffer';
                         }
                     }
-                    return blob ? r.blob() : buffer ? r.arrayBuffer() : json ? r.json() : r.text();
+                    if (method === undefined) {
+                        method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : 'text';
+                    }
+                    return r[method]().then((body: any) => ({ r, body }));
                 })
-                .then((r) => resolve(r as T))
+                .then(({ r, body }) => {
+                    if (!r.ok) {
+                        reject(new ResponseError(r, body));
+                        return;
+                    }
+                    resolve(body as T);
+                })
                 .catch(reject);
         });
     };

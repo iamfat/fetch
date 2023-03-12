@@ -1,7 +1,7 @@
-export * from './fetch';
+export { enableHTTPMethodOveride, ResponseError } from './fetch';
 import extendFetch, { RequestInit } from './fetch';
 
-const fetch = extendFetch((url: RequestInfo, init: RequestInit) => {
+const fetchEx = extendFetch((url: RequestInfo, init: RequestInit) => {
     const abortController = new window.AbortController();
     const promise: any = window.fetch(url, {
         ...init,
@@ -12,5 +12,5 @@ const fetch = extendFetch((url: RequestInfo, init: RequestInit) => {
 }) as <T>(url: RequestInfo, initEx?: RequestInit) => Promise<T> & { abort: () => void };
 
 export type { RequestInit };
-export { fetch };
-export default fetch;
+export { fetchEx as fetch };
+export default fetchEx;
