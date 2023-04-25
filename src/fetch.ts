@@ -14,6 +14,7 @@ class ResponseError extends Error {
 type RequestInitEx = Omit<RequestInit, 'body'> & {
     body?: any;
     timeout?: number;
+    text?: boolean;
     json?: boolean;
     blob?: boolean;
     buffer?: boolean;
@@ -40,7 +41,7 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
     }
 
     return function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
-        const { timeout = 5000, json = true, blob, buffer, ...init } = { headers: {}, ...initEx };
+        const { timeout = 5000, json, text, blob, buffer, ...init } = { headers: {}, ...initEx };
         if (init.method) {
             const method = init.method.toUpperCase();
             if (['PUT', 'PATCH', 'DELETE'].includes(method) && overrideHTTPMethod) {
@@ -61,7 +62,7 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
                 timeoutHandler = setTimeout(() => {
                     timeoutHandler = undefined;
                     promise.abort();
-                    reject(new Error(`Fetch ${url} timeout for ${timeout}ms.`));
+                    reject(new Error(`fetch ${url} timeout for ${timeout}ms.`));
                 }, timeout);
             }
 
@@ -71,18 +72,19 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
                     if (timeoutHandler) clearTimeout(timeoutHandler);
                     const [type] = (r.headers.get('Content-Type') || '').split(';');
                     const [majorType, minorType] = type.split('/');
-                    let method: string | undefined;
-                    if (majorType === 'text') {
-                        method = 'text';
-                    } else if (majorType === 'application') {
-                        if (minorType === 'json') {
-                            method = 'json';
-                        } else if (minorType === 'octet-stream') {
-                            method = blob ? 'blob' : 'arrayBuffer';
-                        }
-                    }
+                    let method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : text ? 'text' : undefined;
                     if (method === undefined) {
-                        method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : 'text';
+                        if (majorType === 'application') {
+                            if (minorType === 'json') {
+                                method = 'json';
+                            } else if (minorType === 'octet-stream') {
+                                method = blob ? 'blob' : 'arrayBuffer';
+                            } else {
+                                method = 'text';
+                            }
+                        } else {
+                            method = 'text';
+                        }
                     }
                     return r[method]().then((body: any) => ({ r, body }));
                 })

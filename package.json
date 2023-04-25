@@ -1,6 +1,6 @@
 {
   "name": "@genee/fetch",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "browser": {
@@ -9,16 +9,16 @@
   },
   "license": "MIT",
   "scripts": {
-    "build:types:browser": "tsc src/index.browser.ts --lib esnext,dom --declaration true --emitDeclarationOnly --outDir dist",
-    "build:types:node": "tsc src/index.ts --lib esnext --declaration true --emitDeclarationOnly --outDir dist",
-    "build": "node esbuild.config.js && yarn build:types:node && yarn build:types:browser"
+    "build:types:browser": "tsc src/index.browser.ts --declaration true --emitDeclarationOnly --outDir dist",
+    "build:types:node": "tsc src/index.ts --declaration true --emitDeclarationOnly --outDir dist",
+    "build": "node esbuild.mjs && npm run build:types:node && npm run build:types:browser"
   },
   "devDependencies": {
-    "@types/node": "^16.11.11",
-    "esbuild": "^0.14.1",
-    "typescript": "^4.5.2"
+    "@types/node": "^18.16.1",
+    "esbuild": "^0.17.18",
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    "node-fetch": "^3.1.0"
+    "node-fetch": "^3.3.1"
   }
 }
