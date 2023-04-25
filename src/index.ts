@@ -14,5 +14,5 @@ const fetchEx = extendFetch((url: RequestInfo, init: NodeRequestInit) => {
     return promise;
 }) as <T>(url: RequestInfo, initEx?: RequestInit) => Promise<T> & { abort: () => void };
 
-export { fetchEx as fetchEx };
+export { fetchEx as fetch };
 export default fetchEx;
