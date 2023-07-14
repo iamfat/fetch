@@ -8,6 +8,9 @@
     "./dist/index.mjs": "./dist/index.browser.mjs"
   },
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "build:types:browser": "tsc src/index.browser.ts --declaration true --emitDeclarationOnly --outDir dist",
     "build:types:node": "tsc src/index.ts --declaration true --emitDeclarationOnly --outDir dist",
