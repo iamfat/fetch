@@ -70,10 +70,10 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
             promise
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
-                    const [type] = (r.headers.get('Content-Type') || '').split(';');
-                    const [majorType, minorType] = type.split('/');
                     let method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : text ? 'text' : undefined;
                     if (method === undefined) {
+                        const [type] = (r.headers.get('Content-Type') || '').split(';');
+                        const [majorType, minorType] = type.split('/');
                         if (majorType === 'application') {
                             if (minorType === 'json') {
                                 method = 'json';
