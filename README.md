@@ -18,6 +18,12 @@ type UserData = {
         },
         // timeout: 5000,   // default is 5000
         // json: true,      // default is true, return original text if json is false
+        beforeRequest(url, init) {
+        
+        },
+        customParser(r: Response, defaultParser: (r: Response) => any) {
+            return defaultParser(r);
+        },
     });
 })();
 ```

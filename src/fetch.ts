@@ -18,6 +18,8 @@ type RequestInitEx = Omit<RequestInit, 'body'> & {
     json?: boolean;
     blob?: boolean;
     buffer?: boolean;
+    beforeRequest?: (url: RequestInfo, initEx: RequestInitEx) => void;
+    customParser?: (r: Response, defaultParser: (r: Response) => Promise<any>) => Promise<any>;
 };
 
 let overrideHTTPMethod = false;
@@ -41,18 +43,53 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
     }
 
     return function fetchEx<T>(url: RequestInfo, initEx?: RequestInitEx): Promise<T> {
-        const { timeout = 5000, json, text, blob, buffer, ...init } = { headers: {}, ...initEx };
+        const { beforeRequest, customParser, ...rawInit } = { ...initEx };
+        if (rawInit.headers) {
+            Object.keys(rawInit.headers).forEach((key) => {
+                const lowerCaseKey = key.toLowerCase();
+                if (lowerCaseKey !== key) {
+                    rawInit.headers![lowerCaseKey] = rawInit.headers![key];
+                    delete rawInit.headers![key];
+                }
+            });
+        }
+
+        beforeRequest?.(url, rawInit);
+
+        let { timeout = 5000, json, text, blob, buffer, headers = {}, ...init } = rawInit as any;
         if (init.method) {
             const method = init.method.toUpperCase();
             if (['PUT', 'PATCH', 'DELETE'].includes(method) && overrideHTTPMethod) {
-                init.headers = { ...init.headers, 'X-HTTP-Method-Override': method };
+                headers = { ...headers, 'x-http-method-override': method };
                 init.method = 'POST';
             }
         }
 
         if (isPlainObject(init.body)) {
-            init.headers['Content-Type'] = 'application/json;charset=UTF-8';
+            headers['content-type'] = 'application/json;charset=UTF-8';
             init.body = JSON.stringify(init.body);
+        }
+
+        init.headers = headers;
+
+        function defaultParser(r: Response) {
+            let method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : text ? 'text' : undefined;
+            if (method === undefined) {
+                const [type] = (r.headers.get('content-type') || '').split(';');
+                const [majorType, minorType] = type.split('/');
+                if (majorType === 'application') {
+                    if (minorType === 'json') {
+                        method = 'json';
+                    } else if (minorType === 'octet-stream') {
+                        method = blob ? 'blob' : 'arrayBuffer';
+                    } else {
+                        method = 'text';
+                    }
+                } else {
+                    method = 'text';
+                }
+            }
+            return r[method]().then((body: any) => ({ r, body }));
         }
 
         return new Promise((resolve, reject) => {
@@ -70,23 +107,7 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
             promise
                 .then((r) => {
                     if (timeoutHandler) clearTimeout(timeoutHandler);
-                    let method = blob ? 'blob' : buffer ? 'arrayBuffer' : json ? 'json' : text ? 'text' : undefined;
-                    if (method === undefined) {
-                        const [type] = (r.headers.get('Content-Type') || '').split(';');
-                        const [majorType, minorType] = type.split('/');
-                        if (majorType === 'application') {
-                            if (minorType === 'json') {
-                                method = 'json';
-                            } else if (minorType === 'octet-stream') {
-                                method = blob ? 'blob' : 'arrayBuffer';
-                            } else {
-                                method = 'text';
-                            }
-                        } else {
-                            method = 'text';
-                        }
-                    }
-                    return r[method]().then((body: any) => ({ r, body }));
+                    return customParser ? customParser(r, defaultParser) : defaultParser(r);
                 })
                 .then(({ r, body }) => {
                     if (!r.ok) {
