@@ -66,7 +66,7 @@ export default (fetch: (url: any, init?: any) => Promise<any> & { abort: () => v
         }
 
         if (isPlainObject(init.body)) {
-            headers['content-type'] = 'application/json;charset=UTF-8';
+            headers['content-type'] = 'application/json; charset=UTF-8';
             init.body = JSON.stringify(init.body);
         }
 
